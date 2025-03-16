@@ -47,7 +47,7 @@
 
     <div class="game-over" id="gameOverText">Game Over!</div>
     <button id="restartButton" onclick="resetGame()">Restart</button>
-    <canvas id="gameCanvas" width="800" height="200"></canvas>
+    <canvas id="gameCanvas"></canvas>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -55,14 +55,18 @@
         const gameOverText = document.getElementById('gameOverText');
         const restartButton = document.getElementById('restartButton');
 
+        // Dynamically adjust the canvas size to fit the screen
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight / 2;  // Take half of the screen height for the game
+
         const dinoImg = new Image();
-        dinoImg.src = 'louay.jpg';
+        dinoImg.src = 'louay.jpg';  // Make sure this path is correct
 
         const dino = {
             x: 50,
-            y: 150,
-            width: 40,
-            height: 50,
+            y: canvas.height - 50,  // Start at the bottom of the canvas
+            width: 45,
+            height: 60,
             velocityY: 0,
             gravity: 1.0,
             jumpPower: -12,
@@ -70,61 +74,64 @@
             jumpCount: 0
         };
 
-        const trees = [];
-        const treeWidth = 20;
-        const treeHeight = 40;
-        const treeSpeed = 5;
+        const boxes = [];  // Array to hold the box obstacles
+        const boxWidth = 40;  // Make the box narrower
+        const boxHeightMin = 20;  // Minimum box height
+        const boxHeightMax = 50;  // Maximum box height
+        const boxSpeed = 5;
         let score = 0;
         let isGameOver = false;
         let isTouching = false;
 
-        function createTree() {
-            if (trees.length === 0 || trees[trees.length - 1].x < canvas.width - 150) {
+        function createBox() {
+            if (boxes.length === 0 || boxes[boxes.length - 1].x < canvas.width - 150) {
                 const gap = Math.random() * 80 + 100;
-                let treeHeight = Math.random() * 30 + 20;
-                trees.push({
+                const boxHeight = Math.random() * (boxHeightMax - boxHeightMin) + boxHeightMin;  // Random box height
+                boxes.push({
                     x: canvas.width,
-                    y: canvas.height - treeHeight,
-                    width: treeWidth,
-                    height: treeHeight,
-                    gap: gap
+                    y: canvas.height - boxHeight,  // Place the box at the bottom
+                    width: boxWidth,
+                    height: boxHeight
                 });
             }
         }
 
         function drawDino() {
-            ctx.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
-        }
-
-        function drawTrees() {
-            ctx.fillStyle = 'brown';
-            for (const tree of trees) {
-                ctx.fillRect(tree.x, tree.y, tree.width, tree.height);
+            if (dinoImg.complete) {
+                ctx.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
             }
         }
 
-        function updateTrees() {
-            for (let i = trees.length - 1; i >= 0; i--) {
-                const tree = trees[i];
-                tree.x -= treeSpeed;
+        function drawBoxes() {
+            ctx.fillStyle = 'brown';
+            for (const box of boxes) {
+                ctx.fillRect(box.x, box.y, box.width, box.height);
+            }
+        }
 
-                if (tree.x + tree.width < 0) {
-                    trees.splice(i, 1);
+        function updateBoxes() {
+            for (let i = boxes.length - 1; i >= 0; i--) {
+                const box = boxes[i];
+                box.x -= boxSpeed;
+
+                if (box.x + box.width < 0) {
+                    boxes.splice(i, 1);
                     score++;
                 }
             }
         }
 
         function checkCollisions() {
-            for (const tree of trees) {
+            for (const box of boxes) {
                 if (
-                    dino.x + dino.width > tree.x &&
-                    dino.x < tree.x + tree.width &&
-                    dino.y + dino.height > tree.y
+                    dino.x + dino.width > box.x &&
+                    dino.x < box.x + box.width &&
+                    dino.y + dino.height > box.y
                 ) {
                     gameOver();
                 }
             }
+
             if (dino.y <= 0) {
                 gameOver();
             }
@@ -148,8 +155,9 @@
             dino.velocityY += dino.gravity;
             dino.y += dino.velocityY;
 
-            if (dino.y > 150) {
-                dino.y = 150;
+            // Check if dino hits the ground or box to stop falling
+            if (dino.y > canvas.height - dino.height) {
+                dino.y = canvas.height - dino.height;
                 dino.isJumping = false;
                 dino.jumpCount = 0;
             }
@@ -166,14 +174,14 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             updateDino();
-            updateTrees();
+            updateBoxes();
             drawDino();
-            drawTrees();
+            drawBoxes();
             drawScore();
             checkCollisions();
 
             if (Math.random() < 0.02) {
-                createTree();
+                createBox();
             }
 
             requestAnimationFrame(gameLoop);
@@ -200,16 +208,20 @@
         function resetGame() {
             isGameOver = false;
             score = 0;
-            trees.length = 0;
+            boxes.length = 0;
             gameOverText.style.display = 'none';
             restartButton.style.display = 'none';
-            dino.y = 150;
+            dino.y = canvas.height - 50;
             dino.velocityY = 0;
             dino.jumpCount = 0;
             gameLoop();
         }
 
-        gameLoop();
+        // Wait for the image to load before starting the game loop
+        dinoImg.onload = function() {
+            gameLoop();
+        };
+
     </script>
 
 </body>
