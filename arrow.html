@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bowmaster Clone - 1 Player</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #fff; /* White background */
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            background-color: #fff; /* White background */
+            border: 2px solid black;
+        }
+        .game-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 20px;
+            color: black;
+        }
+        .message {
+            position: absolute;
+            top: 350px; /* Position under matin2.jpg */
+            left: 350px; /* Center it under matin2.jpg */
+            font-size: 30px;
+            color: black;
+            font-weight: bold;
+            display: none; /* Initially hidden */
+        }
+    </style>
+</head>
+<body>
+    <div class="game-info">
+        <p>Score: <span id="score">0</span></p>
+    </div>
+
+    <canvas id="gameCanvas" width="900" height="700"></canvas> <!-- Game screen bigger -->
+
+    <div id="message" class="message">Good Job Big Boy!</div> <!-- Hidden message initially -->
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const targetImage = new Image();
+        targetImage.src = "matin.jpg"; // Replace with your image file
+        const targetImage2 = new Image();
+        targetImage2.src = "matin2.jpg"; // New image for 200+ score
+        let target = { x: 600, y: 200, width: 120, height: 160 }; // Initial target size
+        let target2Visible = false;
+
+        let score = 0;
+        let isArrowFired = false;
+        let arrow = {
+            x: 50,
+            y: 600,
+            speed: 20, // Arrow speed
+            angle: 0,
+            gravity: 0.5,
+            vx: 0,
+            vy: 0,
+            trajectory: [],
+            isDragging: false,
+        };
+
+        let arrowOriginalPos = { x: 50, y: 600 };
+        let delayReset = false;
+
+        function drawTarget() {
+            ctx.drawImage(targetImage, target.x, target.y, target.width, target.height);
+            if (target2Visible) {
+                ctx.drawImage(targetImage2, 350, 100, 150, 200); // Position for target2
+            }
+        }
+
+        function drawArrow() {
+            ctx.beginPath();
+            ctx.moveTo(arrow.x, arrow.y);
+            ctx.lineTo(arrow.x + Math.cos(arrow.angle) * 50, arrow.y - Math.sin(arrow.angle) * 50); // Arrow length
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        function shootArrow() {
+            if (!isArrowFired) {
+                arrow.vx = Math.cos(arrow.angle) * arrow.speed;
+                arrow.vy = -Math.sin(arrow.angle) * arrow.speed;
+                isArrowFired = true;
+            }
+        }
+
+        function updateArrow() {
+            if (isArrowFired) {
+                arrow.x += arrow.vx;
+                arrow.y += arrow.vy;
+                arrow.vy += arrow.gravity; // Gravity pulling the arrow down
+
+                if (arrow.y > canvas.height || arrow.x < 0 || arrow.x > canvas.width) {
+                    resetArrow();
+                }
+
+                ctx.beginPath();
+                ctx.arc(arrow.x, arrow.y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = "red";
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        function checkCollision() {
+            const distX = Math.abs(arrow.x - (target.x + target.width / 2));
+            const distY = Math.abs(arrow.y - (target.y + target.height / 2));
+
+            if (distX < target.width / 2 && distY < target.height / 2) {
+                score += 10; // Increase score when the arrow hits the target
+                document.getElementById("score").textContent = score;
+
+                // Change target position
+                target.y = Math.random() * (canvas.height - target.height); // Change target Y position (up or down)
+
+                // Adjust target size based on score
+                if (score >= 160) {
+                    target.width = 50; // Smallest size at 160 points
+                    target.height = 80;
+                } else if (score >= 120) {
+                    target.width = 70; // Smaller size at 120 points
+                    target.height = 100;
+                } else if (score >= 60) {
+                    target.width = 90; // Slightly smaller at 60 points
+                    target.height = 130;
+                }
+
+                // Show matin2.jpg when score reaches 200
+                if (score >= 200) {
+                    target2Visible = true; // Show the second target image
+                    document.getElementById("message").style.display = 'block'; // Show the message
+                }
+
+                resetArrow();
+            }
+        }
+
+        function resetArrow() {
+            arrow.x = arrowOriginalPos.x;
+            arrow.y = arrowOriginalPos.y;
+            arrow.vx = 0;
+            arrow.vy = 0;
+            isArrowFired = false;
+
+            delayReset = true;
+
+            setTimeout(() => {
+                delayReset = false;
+            }, 2000); // 2-second delay before next shot
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawTarget();
+            drawArrow();
+            updateArrow();
+            checkCollision();
+        }
+
+        canvas.addEventListener("mousedown", (e) => {
+            if (!delayReset) {
+                arrow.isDragging = true;
+            }
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+            if (arrow.isDragging && !delayReset) {
+                const canvasRect = canvas.getBoundingClientRect();
+                const mouseY = e.clientY - canvasRect.top;
+                const mouseX = e.clientX - canvasRect.left;
+
+                // Set angle based on the mouse position (dragging up and down)
+                arrow.angle = Math.atan2(arrowOriginalPos.y - mouseY, mouseX - arrowOriginalPos.x);
+                arrow.y = mouseY;
+            }
+        });
+
+        canvas.addEventListener("mouseup", () => {
+            if (arrow.isDragging && !delayReset) {
+                arrow.isDragging = false;
+                shootArrow();
+            }
+        });
+
+        targetImage.onload = () => {
+            gameLoop();
+            setInterval(gameLoop, 1000 / 60); // Game loop running at 60 FPS
+        };
+    </script>
+</body>
+</html>

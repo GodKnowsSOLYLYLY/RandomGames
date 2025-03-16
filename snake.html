@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #fafafa;
+            flex-direction: column;
+        }
+
+        #gameArea {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 800px; /* Width set to 800px */
+            height: 600px; /* Height set to 600px */
+            background-color: #000;
+            position: relative;
+        }
+
+        canvas {
+            background-color: #222;
+            border: 2px solid #fff;
+        }
+
+        #gameOverMessage {
+            display: none;
+            text-align: center;
+            font-size: 30px;
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameArea">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+    <div id="gameOverMessage">
+        <p>You Lost!</p>
+        <p>Score: <span id="finalScore"></span></p>
+        <button onclick="restartGame()">Try Again</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const gridSize = 20; // Grid size
+        const canvasWidth = 800; // Width of the rectangular canvas
+        const canvasHeight = 600; // Height of the rectangular canvas
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+
+        let snake = [{x: 240, y: 200}]; // Snake starts with 1 segment
+        let apple = {x: 200, y: 200}; // Initial apple position
+        let direction = {x: gridSize, y: 0}; // Initial snake direction (right)
+        let score = 0; // Initial score
+        let isGameOver = false;
+
+        function draw() {
+            if (isGameOver) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "white";
+                ctx.font = "30px Arial";
+                ctx.fillText("Game Over!", 300, 200);
+                return;
+            }
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw snake
+            ctx.fillStyle = "green";
+            snake.forEach(segment => {
+                ctx.fillRect(segment.x, segment.y, gridSize, gridSize);
+            });
+
+            // Draw apple
+            ctx.fillStyle = "red";
+            ctx.fillRect(apple.x, apple.y, gridSize, gridSize);
+
+            // Move snake
+            const newHead = {x: snake[0].x + direction.x, y: snake[0].y + direction.y};
+            
+            // Check collision with walls or itself
+            if (newHead.x < 0 || newHead.x >= canvasWidth || newHead.y < 0 || newHead.y >= canvasHeight || isCollidingWithSnake(newHead)) {
+                endGame();
+                return;
+            }
+
+            snake.unshift(newHead); // Add new head to snake
+
+            // Check if snake eats apple
+            if (newHead.x === apple.x && newHead.y === apple.y) {
+                score++; // Increase score
+                generateApple(); // Generate a new apple
+            } else {
+                snake.pop(); // Remove the last segment of the snake
+            }
+
+            // Display score
+            ctx.fillStyle = "white";
+            ctx.font = "16px Arial";
+            ctx.fillText("Score: " + score, 10, 20);
+        }
+
+        function isCollidingWithSnake(head) {
+            for (let i = 1; i < snake.length; i++) {
+                if (snake[i].x === head.x && snake[i].y === head.y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function generateApple() {
+            // Generate a new apple at a random position
+            apple.x = Math.floor(Math.random() * (canvasWidth / gridSize)) * gridSize;
+            apple.y = Math.floor(Math.random() * (canvasHeight / gridSize)) * gridSize;
+        }
+
+        function changeDirection(event) {
+            switch (event.key) {
+                case "ArrowUp":
+                    if (direction.y === 0) direction = {x: 0, y: -gridSize};
+                    break;
+                case "ArrowDown":
+                    if (direction.y === 0) direction = {x: 0, y: gridSize};
+                    break;
+                case "ArrowLeft":
+                    if (direction.x === 0) direction = {x: -gridSize, y: 0};
+                    break;
+                case "ArrowRight":
+                    if (direction.x === 0) direction = {x: gridSize, y: 0};
+                    break;
+            }
+        }
+
+        document.addEventListener("keydown", changeDirection);
+
+        function endGame() {
+            // Display Game Over message and final score
+            document.getElementById("finalScore").textContent = score;
+            document.getElementById("gameOverMessage").style.display = "block";
+            isGameOver = true;
+        }
+
+        function restartGame() {
+            // Reset game state
+            snake = [{x: 240, y: 200}];
+            apple = {x: 200, y: 200};
+            direction = {x: gridSize, y: 0};
+            score = 0;
+            isGameOver = false;
+            document.getElementById("gameOverMessage").style.display = "none"; // Hide game over message
+            gameLoop(); // Restart game loop
+        }
+
+        function gameLoop() {
+            draw();
+            if (!isGameOver) {
+                setTimeout(gameLoop, 100); // Game loop every 100ms
+            }
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Louay Jumps Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            flex-direction: column;
+        }
+        #gameCanvas {
+            background-color: #f0f0f0;
+            border: 2px solid black;
+            touch-action: none;
+        }
+        .game-over {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 50px;
+            color: black;
+            display: none;
+        }
+        #restartButton {
+            padding: 10px 20px;
+            font-size: 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-over" id="gameOverText">Game Over!</div>
+    <button id="restartButton" onclick="resetGame()">Restart</button>
+    <canvas id="gameCanvas" width="800" height="200"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverText = document.getElementById('gameOverText');
+        const restartButton = document.getElementById('restartButton');
+
+        const dinoImg = new Image();
+        dinoImg.src = 'louay.jpg';
+
+        const dino = {
+            x: 50,
+            y: 150,
+            width: 40,
+            height: 50,
+            velocityY: 0,
+            gravity: 1.0,
+            jumpPower: -12,
+            isJumping: false,
+            jumpCount: 0
+        };
+
+        const trees = [];
+        const treeWidth = 20;
+        const treeHeight = 40;
+        const treeSpeed = 5;
+        let score = 0;
+        let isGameOver = false;
+        let isTouching = false;
+
+        function createTree() {
+            if (trees.length === 0 || trees[trees.length - 1].x < canvas.width - 150) {
+                const gap = Math.random() * 80 + 100;
+                let treeHeight = Math.random() * 30 + 20;
+                trees.push({
+                    x: canvas.width,
+                    y: canvas.height - treeHeight,
+                    width: treeWidth,
+                    height: treeHeight,
+                    gap: gap
+                });
+            }
+        }
+
+        function drawDino() {
+            ctx.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
+        }
+
+        function drawTrees() {
+            ctx.fillStyle = 'brown';
+            for (const tree of trees) {
+                ctx.fillRect(tree.x, tree.y, tree.width, tree.height);
+            }
+        }
+
+        function updateTrees() {
+            for (let i = trees.length - 1; i >= 0; i--) {
+                const tree = trees[i];
+                tree.x -= treeSpeed;
+
+                if (tree.x + tree.width < 0) {
+                    trees.splice(i, 1);
+                    score++;
+                }
+            }
+        }
+
+        function checkCollisions() {
+            for (const tree of trees) {
+                if (
+                    dino.x + dino.width > tree.x &&
+                    dino.x < tree.x + tree.width &&
+                    dino.y + dino.height > tree.y
+                ) {
+                    gameOver();
+                }
+            }
+            if (dino.y <= 0) {
+                gameOver();
+            }
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            gameOverText.style.display = 'block';
+            restartButton.style.display = 'block';
+        }
+
+        function jump() {
+            if (dino.jumpCount < 2) {
+                dino.velocityY = dino.jumpPower;
+                dino.isJumping = true;
+                dino.jumpCount++;
+            }
+        }
+
+        function updateDino() {
+            dino.velocityY += dino.gravity;
+            dino.y += dino.velocityY;
+
+            if (dino.y > 150) {
+                dino.y = 150;
+                dino.isJumping = false;
+                dino.jumpCount = 0;
+            }
+        }
+
+        function drawScore() {
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.fillText('Score: ' + score, 10, 20);
+        }
+
+        function gameLoop() {
+            if (isGameOver) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            updateDino();
+            updateTrees();
+            drawDino();
+            drawTrees();
+            drawScore();
+            checkCollisions();
+
+            if (Math.random() < 0.02) {
+                createTree();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Click & Touch Controls
+        function startJump() {
+            if (!isGameOver) {
+                isTouching = true;
+                jump();
+            }
+        }
+
+        function endJump() {
+            isTouching = false;
+        }
+
+        document.addEventListener('mousedown', startJump);  // PC Mouse Click
+        document.addEventListener('mouseup', endJump);
+
+        document.addEventListener('touchstart', startJump); // Mobile Tap
+        document.addEventListener('touchend', endJump);
+
+        function resetGame() {
+            isGameOver = false;
+            score = 0;
+            trees.length = 0;
+            gameOverText.style.display = 'none';
+            restartButton.style.display = 'none';
+            dino.y = 150;
+            dino.velocityY = 0;
+            dino.jumpCount = 0;
+            gameLoop();
+        }
+
+        gameLoop();
+    </script>
+
+</body>
+</html>

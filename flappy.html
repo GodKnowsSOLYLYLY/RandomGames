@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floppy Bird</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { text-align: center; font-family: Arial, sans-serif; }
+        canvas { background-color: skyblue; display: block; width: 100vw; height: 100vh; }
+        #sticker { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; }
+    </style>
+</head>
+<body>
+    
+    <canvas id="gameCanvas" width="320" height="480"></canvas>
+    <img id="sticker" src="Soly.jpg" alt="Sticker">
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+        const ctx = canvas.getContext("2d");
+        
+        let bird = { x: 50, y: 150, radius: 10, gravity: 0.3, lift: -7, velocity: 0 };
+        let pipes = [];
+        let frame = 0;
+        let score = 0;
+        let gameOver = false;
+        
+        document.addEventListener("keydown", jump);
+        document.addEventListener("click", jump);
+document.addEventListener("touchstart", jump);
+        
+        function jump() {
+            if (!gameOver) bird.velocity = bird.lift;
+        }
+        
+        function update() {
+            if (gameOver) return;
+            
+            bird.velocity += bird.gravity;
+            bird.y += bird.velocity;
+            
+            if (frame % 100 === 0) {
+                let gap = 100;
+                let topHeight = Math.random() * (canvas.height - gap - 50);
+                pipes.push({ x: canvas.width, top: topHeight, bottom: topHeight + gap, width: 30 });
+            }
+            
+            pipes.forEach(pipe => pipe.x -= 2);
+            
+            pipes = pipes.filter(pipe => pipe.x + pipe.width > 0);
+            
+            pipes.forEach(pipe => {
+                if (bird.x + bird.radius > pipe.x && bird.x - bird.radius < pipe.x + pipe.width) {
+                    if (bird.y - bird.radius < pipe.top || bird.y + bird.radius > pipe.bottom) {
+                        endGame();
+                    }
+                }
+            });
+            
+            if (bird.y + bird.radius > canvas.height || bird.y - bird.radius < 0) {
+                endGame();
+            }
+            
+            score += 0.01;
+            frame++;
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = "yellow";
+            ctx.beginPath();
+            ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = "green";
+            pipes.forEach(pipe => {
+                ctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
+                ctx.fillRect(pipe.x, pipe.bottom, pipe.width, canvas.height - pipe.bottom);
+            });
+            
+            ctx.fillStyle = "black";
+            ctx.fillText("Score: " + Math.floor(score), 10, 20);
+        }
+        
+        function endGame() {
+            gameOver = true;
+            document.getElementById("sticker").style.display = "block";
+document.getElementById("retryButton").style.display = "block";
+        }
+        
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        gameLoop();
+    </script>
+<button id='retryButton' style='display: none; position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); padding: 10px 20px; font-size: 16px; cursor: pointer;'>Try Again</button>
+    <script>
+        document.getElementById("retryButton").addEventListener("click", function() {
+            location.reload();
+        });
+    </script>
+</body>
+</html>

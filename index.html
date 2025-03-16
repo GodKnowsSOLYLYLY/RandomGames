@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: lightgray; /* Set background color to light gray */
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 40px;  /* Space between the squares and the text */
+            justify-items: center;
+            align-items: center;
+            width: 300px;
+            height: 380px; /* Adjusted height to fit the new spacing */
+        }
+        .game {
+            width: 120px;
+            height: 120px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .game1 {
+            background-color: black;
+        }
+        .game2 {
+            background-color: navy;
+        }
+        .game3 {
+            background-color: darkred;
+        }
+        .game4 {
+            background-color: darkgreen;
+        }
+        .game-name {
+            margin-top: 20px;  /* Space between the box and the text */
+            text-align: center;
+            font-size: 16px;
+            color: black;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Game 1 (top-left) -->
+        <div class="game-container">
+            <div class="game game1"></div>
+            <a href="louayjumps.html" class="game-name">Louay Jumps</a>
+        </div>
+
+        <!-- Game 2 (top-right) -->
+        <div class="game-container">
+            <div class="game game2"></div>
+            <a href="snake.html" class="game-name">Snake Game</a>
+        </div>
+
+        <!-- Game 3 (bottom-left) -->
+        <div class="game-container">
+            <div class="game game3"></div>
+            <a href="arrow.html" class="game-name">Hit Matin</a>
+        </div>
+
+        <!-- Game 4 (bottom-right) -->
+        <div class="game-container">
+            <div class="game game4"></div>
+            <a href="flappy.html" class="game-name">Flappy Soleyman</a>
+        </div>
+    </div>
+
+</body>
+</html>
