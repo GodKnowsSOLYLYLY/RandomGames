@@ -20,9 +20,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 800px; /* Width set to 800px */
-            height: 600px; /* Height set to 600px */
-            background-color: #000;
+            width: 100%;
+            height: 80%; /* Adjust height for better mobile experience */
+            
             position: relative;
         }
 
@@ -73,13 +73,13 @@
         const ctx = canvas.getContext("2d");
 
         const gridSize = 20; // Grid size
-        const canvasWidth = 800; // Width of the rectangular canvas
-        const canvasHeight = 600; // Height of the rectangular canvas
+        const canvasWidth = window.innerWidth * 0.8; // Responsive canvas width (80% of screen width)
+        const canvasHeight = window.innerHeight * 0.6; // Responsive canvas height (60% of screen height)
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
 
-        let snake = [{x: 240, y: 200}]; // Snake starts with 1 segment
-        let apple = {x: 200, y: 200}; // Initial apple position
+        let snake = [{x: Math.floor(canvasWidth / 2 / gridSize) * gridSize, y: Math.floor(canvasHeight / 2 / gridSize) * gridSize}];
+        let apple = {x: 200, y: 200};
         let direction = {x: gridSize, y: 0}; // Initial snake direction (right)
         let score = 0; // Initial score
         let isGameOver = false;
@@ -89,7 +89,7 @@
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = "white";
                 ctx.font = "30px Arial";
-                ctx.fillText("Game Over!", 300, 200);
+                ctx.fillText("Game Over!", canvas.width / 2 - 80, canvas.height / 2);
                 return;
             }
 
@@ -163,6 +163,32 @@
             }
         }
 
+        // Touch controls for mobile
+        let startX, startY;
+
+        canvas.addEventListener("touchstart", (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        canvas.addEventListener("touchmove", (e) => {
+            if (!startX || !startY) return;
+
+            const moveX = e.touches[0].clientX - startX;
+            const moveY = e.touches[0].clientY - startY;
+
+            if (Math.abs(moveX) > Math.abs(moveY)) {
+                if (moveX > 0 && direction.x === 0) direction = {x: gridSize, y: 0};
+                if (moveX < 0 && direction.x === 0) direction = {x: -gridSize, y: 0};
+            } else {
+                if (moveY > 0 && direction.y === 0) direction = {x: 0, y: gridSize};
+                if (moveY < 0 && direction.y === 0) direction = {x: 0, y: -gridSize};
+            }
+
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
         document.addEventListener("keydown", changeDirection);
 
         function endGame() {
@@ -174,7 +200,7 @@
 
         function restartGame() {
             // Reset game state
-            snake = [{x: 240, y: 200}];
+            snake = [{x: Math.floor(canvasWidth / 2 / gridSize) * gridSize, y: Math.floor(canvasHeight / 2 / gridSize) * gridSize}];
             apple = {x: 200, y: 200};
             direction = {x: gridSize, y: 0};
             score = 0;
