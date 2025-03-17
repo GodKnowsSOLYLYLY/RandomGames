@@ -59,22 +59,21 @@
         canvas.height = window.innerHeight / 2;
 
         const dinoImg = new Image();
-        dinoImg.src = 'louay.jpg'; // Dino image
+        dinoImg.src = 'louay.jpg'; // Replace with your image path
 
         const blondieImg = new Image();
-        blondieImg.src = 'blondie.jpg'; // Blondie image
+        blondieImg.src = 'blondie.jpg'; // Replace with your image path
 
         const dino = {
             x: 50,
             y: canvas.height - 50,
-            width: 40,
-            height: 55,
+            width: 45,
+            height: 60,
             velocityY: 0,
             velocityX: 0,
-            gravity: 1.5, // Increased gravity to make falling faster
-            jumpPower: -15, // Increased jump power for quicker jumps
-            isJumping: false,
-            jumpCount: 0
+            gravity: 1.0,
+            jumpPower: -13.5, // Adjusted jump power to -13.5
+            isJumping: false
         };
 
         let blondie = null;
@@ -82,16 +81,14 @@
         const boxWidth = 20;
         const boxHeightMin = 10;
         const boxHeightMax = 30;
-        let boxSpeed = 8; // Increased speed for blocks
+        const boxSpeed = 8;
         let score = 0;
         let isGameOver = false;
         let gameWon = false;
 
-        // Prevent multiple touch events
-        let canJump = true;
-
+        // Create box function (no gap between blocks)
         function createBox() {
-            if (score < 100 && (boxes.length === 0 || boxes[boxes.length - 1].x < canvas.width - 150)) {
+            if (score < 100) {
                 const boxHeight = Math.random() * (boxHeightMax - boxHeightMin) + boxHeightMin;
                 boxes.push({
                     x: canvas.width,
@@ -115,45 +112,36 @@
         }
 
         function drawBoxes() {
-            ctx.fillStyle = 'brown';
+            ctx.fillStyle = 'darkslategray'; // Pencil grey-black color for blocks
             for (const box of boxes) {
                 ctx.fillRect(box.x, box.y, box.width, box.height);
             }
         }
 
         function updateBoxes() {
-            if (score < 100) {
-                for (let i = boxes.length - 1; i >= 0; i--) {
-                    boxes[i].x -= boxSpeed; // Boxes move at the increased speed
-                    if (boxes[i].x + boxes[i].width < 0) {
-                        boxes.splice(i, 1);
-                        score++;
-                        if (score >= 100) {
-                            blondie = {
-                                x: canvas.width - 100,
-                                y: canvas.height - 60,
-                                width: 45,
-                                height: 60
-                            };
-                            boxes = []; // Reset boxes
-                            dino.velocityX = 7; // Faster Dino when Blondie appears
-                        }
+            for (let i = boxes.length - 1; i >= 0; i--) {
+                boxes[i].x -= boxSpeed;
+                if (boxes[i].x + boxes[i].width < 0) {
+                    boxes.splice(i, 1);
+                    score++;
+                    if (score >= 100) {
+                        // After score reaches 100, stop generating new blocks
+                        boxes = [];
                     }
                 }
             }
         }
 
         function checkCollisions() {
-            // Check collision with boxes
             for (const box of boxes) {
-                if (dino.x + dino.width > box.x && dino.x < box.x + box.width &&
-                    dino.y + dino.height > box.y) {
+                if (
+                    dino.x + dino.width > box.x &&
+                    dino.x < box.x + box.width &&
+                    dino.y + dino.height > box.y
+                ) {
+                    // If Dino collides with the box, the game ends
                     gameOver();
                 }
-            }
-            // Check if Dino touches Blondie at score 100
-            if (blondie && dino.x + dino.width > blondie.x) {
-                winGame();
             }
         }
 
@@ -164,24 +152,10 @@
             restartButton.style.display = 'block';
         }
 
-        function winGame() {
-            isGameOver = true;
-            gameWon = true;
-            gameOverText.textContent = 'You Win!';
-            gameOverText.style.display = 'block';
-            restartButton.style.display = 'block';
-        }
-
         function jump() {
-            if (canJump && dino.jumpCount < 2) {
-                canJump = false; // Block further jumps until current one is processed
+            if (!dino.isJumping) {
                 dino.velocityY = dino.jumpPower;
                 dino.isJumping = true;
-                dino.jumpCount++;
-                
-                setTimeout(() => {
-                    canJump = true; // Allow jump again after short delay
-                }, 200); // Delay time in milliseconds
             }
         }
 
@@ -193,7 +167,6 @@
             if (dino.y > canvas.height - dino.height) {
                 dino.y = canvas.height - dino.height;
                 dino.isJumping = false;
-                dino.jumpCount = 0;
             }
         }
 
@@ -215,16 +188,16 @@
             drawScore();
             checkCollisions();
 
-            if (Math.random() < 0.02) {
+            // Create a new box every 30 frames
+            if (Math.random() < 0.03) {
                 createBox();
             }
 
             requestAnimationFrame(gameLoop);
         }
 
-        // Event listeners for mobile and desktop
-        document.addEventListener('mousedown', jump); // Desktop mouse click
-        document.addEventListener('touchstart', jump); // Mobile touch event
+        document.addEventListener('mousedown', jump);
+        document.addEventListener('touchstart', jump);
 
         function resetGame() {
             isGameOver = false;
@@ -237,7 +210,7 @@
             restartButton.style.display = 'none';
             dino.y = canvas.height - 50;
             dino.velocityY = 0;
-            dino.jumpCount = 0;
+            dino.isJumping = false;
             gameLoop();
         }
 
