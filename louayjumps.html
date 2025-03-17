@@ -125,11 +125,11 @@
                     if (boxes[i].x + boxes[i].width < 0) {
                         boxes.splice(i, 1);
                         score++;
-                        if (score >= 10) {
+                        if (score >= 100) {
                             blondie = {
                                 x: canvas.width - 100,
                                 y: canvas.height - 60,
-                                width: 45,
+                                width: 50,
                                 height: 60
                             };
                             boxes = [];
