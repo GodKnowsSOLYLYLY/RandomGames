@@ -55,41 +55,44 @@
         const gameOverText = document.getElementById('gameOverText');
         const restartButton = document.getElementById('restartButton');
 
-        // Dynamically adjust the canvas size to fit the screen
         canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight / 2;  // Take half of the screen height for the game
+        canvas.height = window.innerHeight / 2;
 
         const dinoImg = new Image();
-        dinoImg.src = 'louay.jpg';  // Make sure this path is correct
+        dinoImg.src = 'louay.jpg';
+
+        const blondieImg = new Image();
+        blondieImg.src = 'blondie.jpg';
 
         const dino = {
             x: 50,
-            y: canvas.height - 50,  // Start at the bottom of the canvas
+            y: canvas.height - 50,
             width: 45,
             height: 60,
             velocityY: 0,
+            velocityX: 0,
             gravity: 1.0,
             jumpPower: -12,
             isJumping: false,
             jumpCount: 0
         };
 
-        const boxes = [];  // Array to hold the box obstacles
-        const boxWidth = 40;  // Make the box narrower
-        const boxHeightMin = 20;  // Minimum box height
-        const boxHeightMax = 50;  // Maximum box height
+        let blondie = null;
+        let boxes = [];
+        const boxWidth = 20;
+        const boxHeightMin = 10;
+        const boxHeightMax = 30;
         const boxSpeed = 5;
         let score = 0;
         let isGameOver = false;
-        let isTouching = false;
+        let gameWon = false;
 
         function createBox() {
-            if (boxes.length === 0 || boxes[boxes.length - 1].x < canvas.width - 150) {
-                const gap = Math.random() * 80 + 100;
-                const boxHeight = Math.random() * (boxHeightMax - boxHeightMin) + boxHeightMin;  // Random box height
+            if (score < 10 && (boxes.length === 0 || boxes[boxes.length - 1].x < canvas.width - 150)) {
+                const boxHeight = Math.random() * (boxHeightMax - boxHeightMin) + boxHeightMin;
                 boxes.push({
                     x: canvas.width,
-                    y: canvas.height - boxHeight,  // Place the box at the bottom
+                    y: canvas.height - boxHeight,
                     width: boxWidth,
                     height: boxHeight
                 });
@@ -102,6 +105,12 @@
             }
         }
 
+        function drawBlondie() {
+            if (blondie && blondieImg.complete) {
+                ctx.drawImage(blondieImg, blondie.x, blondie.y, blondie.width, blondie.height);
+            }
+        }
+
         function drawBoxes() {
             ctx.fillStyle = 'brown';
             for (const box of boxes) {
@@ -110,35 +119,44 @@
         }
 
         function updateBoxes() {
-            for (let i = boxes.length - 1; i >= 0; i--) {
-                const box = boxes[i];
-                box.x -= boxSpeed;
-
-                if (box.x + box.width < 0) {
-                    boxes.splice(i, 1);
-                    score++;
+            if (score < 10) {
+                for (let i = boxes.length - 1; i >= 0; i--) {
+                    boxes[i].x -= boxSpeed;
+                    if (boxes[i].x + boxes[i].width < 0) {
+                        boxes.splice(i, 1);
+                        score++;
+                        if (score >= 10) {
+                            blondie = {
+                                x: canvas.width - 100,
+                                y: canvas.height - 60,
+                                width: 45,
+                                height: 60
+                            };
+                            boxes = [];
+                            dino.velocityX = 2; 
+                        }
+                    }
                 }
             }
         }
 
         function checkCollisions() {
-            for (const box of boxes) {
-                if (
-                    dino.x + dino.width > box.x &&
-                    dino.x < box.x + box.width &&
-                    dino.y + dino.height > box.y
-                ) {
-                    gameOver();
-                }
-            }
-
-            if (dino.y <= 0) {
-                gameOver();
+            if (blondie && dino.x + dino.width > blondie.x) {
+                winGame();
             }
         }
 
         function gameOver() {
             isGameOver = true;
+            gameOverText.textContent = 'Game Over!';
+            gameOverText.style.display = 'block';
+            restartButton.style.display = 'block';
+        }
+
+        function winGame() {
+            isGameOver = true;
+            gameWon = true;
+            gameOverText.textContent = 'You Win!';
             gameOverText.style.display = 'block';
             restartButton.style.display = 'block';
         }
@@ -154,8 +172,8 @@
         function updateDino() {
             dino.velocityY += dino.gravity;
             dino.y += dino.velocityY;
+            dino.x += dino.velocityX;
 
-            // Check if dino hits the ground or box to stop falling
             if (dino.y > canvas.height - dino.height) {
                 dino.y = canvas.height - dino.height;
                 dino.isJumping = false;
@@ -176,6 +194,7 @@
             updateDino();
             updateBoxes();
             drawDino();
+            drawBlondie();
             drawBoxes();
             drawScore();
             checkCollisions();
@@ -187,28 +206,16 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Click & Touch Controls
-        function startJump() {
-            if (!isGameOver) {
-                isTouching = true;
-                jump();
-            }
-        }
-
-        function endJump() {
-            isTouching = false;
-        }
-
-        document.addEventListener('mousedown', startJump);  // PC Mouse Click
-        document.addEventListener('mouseup', endJump);
-
-        document.addEventListener('touchstart', startJump); // Mobile Tap
-        document.addEventListener('touchend', endJump);
+        document.addEventListener('mousedown', jump);
+        document.addEventListener('touchstart', jump);
 
         function resetGame() {
             isGameOver = false;
+            gameWon = false;
             score = 0;
-            boxes.length = 0;
+            boxes = [];
+            blondie = null;
+            dino.velocityX = 0;
             gameOverText.style.display = 'none';
             restartButton.style.display = 'none';
             dino.y = canvas.height - 50;
@@ -217,12 +224,9 @@
             gameLoop();
         }
 
-        // Wait for the image to load before starting the game loop
         dinoImg.onload = function() {
             gameLoop();
         };
-
     </script>
-
 </body>
 </html>
